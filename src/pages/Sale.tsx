@@ -16,7 +16,7 @@ export default function Sale({ onNavigate }: SaleProps) {
   const [amountPaid, setAmountPaid] = useState('');
   const [evidencePhoto, setEvidencePhoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const YAPE_PHONE = '930608660';
+  const YAPE_PHONE = '947734268';
 
   const availableProducts = products.filter((p) => p.stock > 0);
 
