@@ -5,12 +5,14 @@ interface StoreContextType {
   products: Product[];
   sales: Sale[];
   initialCash: number;
+  yapePhoneNumber: string;
   addProduct: (product: Omit<Product, 'id'>) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
   addSale: (sale: Omit<Sale, 'id' | 'timestamp'>) => void;
   updateSale: (id: string, updates: Partial<Sale>) => void;
   updateInitialCash: (amount: number) => void;
+  updateYapePhoneNumber: (phoneNumber: string) => void;
   resetData: () => void;
   getTotalCash: () => number;
 }
@@ -23,6 +25,7 @@ const initialState: StoreState = {
   products: [],
   sales: [],
   initialCash: 0,
+  yapePhoneNumber: '943177720',
 };
 
 export function StoreProvider({ children }: { children: ReactNode }) {
@@ -113,6 +116,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const updateYapePhoneNumber = (phoneNumber: string) => {
+    setState((prev) => ({
+      ...prev,
+      yapePhoneNumber: phoneNumber,
+    }));
+  };
+
   const resetData = () => {
     setState(initialState);
     localStorage.removeItem(STORAGE_KEY);
@@ -129,12 +139,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         products: state.products,
         sales: state.sales,
         initialCash: state.initialCash,
+        yapePhoneNumber: state.yapePhoneNumber,
         addProduct,
         updateProduct,
         deleteProduct,
         addSale,
         updateSale,
         updateInitialCash,
+        updateYapePhoneNumber,
         resetData,
         getTotalCash,
       }}

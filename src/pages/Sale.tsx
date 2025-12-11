@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { ArrowLeft, Plus, Minus, Trash2, DollarSign, Camera, Upload, X } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Trash2, DollarSign, Camera, Upload, X, Download } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { CartItem } from '../types/types';
 import { Page } from '../types/types';
@@ -9,14 +9,14 @@ interface SaleProps {
 }
 
 export default function Sale({ onNavigate }: SaleProps) {
-  const { products, addSale } = useStore();
+  const { products, addSale, yapePhoneNumber } = useStore();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'efectivo' | 'yape'>('efectivo');
   const [amountPaid, setAmountPaid] = useState('');
   const [evidencePhoto, setEvidencePhoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const YAPE_PHONE = '943177720';
+  const uploadInputRef = useRef<HTMLInputElement>(null);
 
   const availableProducts = products.filter((p) => p.stock > 0);
 
@@ -98,7 +98,7 @@ export default function Sale({ onNavigate }: SaleProps) {
       paymentMethod,
       amountPaid: paid,
       change,
-      yapePhoneNumber: paymentMethod === 'yape' ? YAPE_PHONE : undefined,
+      yapePhoneNumber: paymentMethod === 'yape' ? yapePhoneNumber : undefined,
       evidencePhoto: evidencePhoto || undefined,
     });
 
@@ -112,6 +112,12 @@ export default function Sale({ onNavigate }: SaleProps) {
   const handleTakePhoto = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
+    }
+  };
+
+  const handleUploadPhoto = () => {
+    if (uploadInputRef.current) {
+      uploadInputRef.current.click();
     }
   };
 
@@ -131,6 +137,19 @@ export default function Sale({ onNavigate }: SaleProps) {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    if (uploadInputRef.current) {
+      uploadInputRef.current.value = '';
+    }
+  };
+
+  const handleDownloadPhoto = () => {
+    if (!evidencePhoto) return;
+    const link = document.createElement('a');
+    link.href = evidencePhoto;
+    link.download = `evidencia-yape-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const total = getTotal();
@@ -301,7 +320,7 @@ export default function Sale({ onNavigate }: SaleProps) {
                     />
                     {amountPaid && parseFloat(amountPaid) >= total && (
                       <div className="mt-2 text-right">
-                        <span className="text-gray-400">Vuelto: </span>
+                        <span className="text-gray-400">Caja: </span>
                         <span className="text-yellow-500 font-bold text-xl">
                           S/ {getChange().toFixed(2)}
                         </span>
@@ -318,11 +337,11 @@ export default function Sale({ onNavigate }: SaleProps) {
                       </label>
                       <div className="flex items-center gap-2">
                         <span className="text-2xl font-bold text-purple-400">
-                          {YAPE_PHONE}
+                          {yapePhoneNumber}
                         </span>
                         <button
                           type="button"
-                          onClick={() => navigator.clipboard.writeText(YAPE_PHONE)}
+                          onClick={() => navigator.clipboard.writeText(yapePhoneNumber)}
                           className="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-500 transition-colors"
                         >
                           Copiar
@@ -345,6 +364,13 @@ export default function Sale({ onNavigate }: SaleProps) {
                         onChange={handleFileChange}
                         className="hidden"
                       />
+                      <input
+                        ref={uploadInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
                       {evidencePhoto ? (
                         <div className="relative">
                           <img
@@ -352,13 +378,24 @@ export default function Sale({ onNavigate }: SaleProps) {
                             alt="Evidencia de pago"
                             className="w-full rounded-xl border-2 border-yellow-600 max-h-64 object-contain bg-black"
                           />
-                          <button
-                            type="button"
-                            onClick={handleRemovePhoto}
-                            className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full hover:bg-red-500 transition-colors"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                          <div className="absolute top-2 right-2 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={handleDownloadPhoto}
+                              className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-500 transition-colors"
+                              title="Descargar foto"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleRemovePhoto}
+                              className="bg-red-600 text-white p-2 rounded-full hover:bg-red-500 transition-colors"
+                              title="Eliminar foto"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <div className="flex gap-2">
@@ -372,7 +409,7 @@ export default function Sale({ onNavigate }: SaleProps) {
                           </button>
                           <button
                             type="button"
-                            onClick={handleTakePhoto}
+                            onClick={handleUploadPhoto}
                             className="flex-1 flex items-center justify-center gap-2 bg-gray-800 text-gray-300 font-semibold py-3 rounded-xl hover:bg-gray-700 transition-colors"
                           >
                             <Upload className="w-5 h-5" />

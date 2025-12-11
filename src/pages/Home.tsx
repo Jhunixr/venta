@@ -23,7 +23,7 @@ export default function Home({ onNavigate }: HomeProps) {
       icon: Settings,
       label: 'Configuración',
       page: 'settings' as Page,
-      description: 'Vuelto inicial',
+      description: 'Caja inicial',
     },
     {
       icon: FileText,

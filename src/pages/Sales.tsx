@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Edit2, X, Save, Camera, Upload } from 'lucide-react';
+import { ArrowLeft, Edit2, X, Save, Camera, Upload, Download } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { Sale, Page } from '../types/types';
 
@@ -8,10 +8,11 @@ interface SalesProps {
 }
 
 export default function Sales({ onNavigate }: SalesProps) {
-  const { sales, updateSale } = useStore();
+  const { sales, updateSale, yapePhoneNumber } = useStore();
   const [editingSale, setEditingSale] = useState<string | null>(null);
   const [editedSale, setEditedSale] = useState<Partial<Sale> | null>(null);
   const [fileInputRefs, setFileInputRefs] = useState<{ [key: string]: HTMLInputElement | null }>({});
+  const [uploadInputRefs, setUploadInputRefs] = useState<{ [key: string]: HTMLInputElement | null }>({});
 
   const handleEdit = (sale: Sale) => {
     setEditingSale(sale.id);
@@ -46,6 +47,27 @@ export default function Sales({ onNavigate }: SalesProps) {
     }
   };
 
+  const handleTakePhoto = (saleId: string) => {
+    if (fileInputRefs[saleId]) {
+      fileInputRefs[saleId].click();
+    }
+  };
+
+  const handleUploadPhoto = (saleId: string) => {
+    if (uploadInputRefs[saleId]) {
+      uploadInputRefs[saleId].click();
+    }
+  };
+
+  const handleDownloadPhoto = (photoData: string, saleId: string) => {
+    const link = document.createElement('a');
+    link.href = photoData;
+    link.download = `evidencia-yape-${saleId}-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleString('es-PE', {
       year: 'numeric',
@@ -55,8 +77,6 @@ export default function Sales({ onNavigate }: SalesProps) {
       minute: '2-digit',
     });
   };
-
-  const YAPE_PHONE = '943177720';
 
   return (
     <div className="min-h-screen bg-black text-white pb-8">
@@ -148,7 +168,7 @@ export default function Sales({ onNavigate }: SalesProps) {
                         {isEditing ? (
                           <input
                             type="text"
-                            value={editedSale?.yapePhoneNumber || YAPE_PHONE}
+                            value={editedSale?.yapePhoneNumber || yapePhoneNumber}
                             onChange={(e) =>
                               setEditedSale((prev) => ({
                                 ...prev,
@@ -159,7 +179,7 @@ export default function Sales({ onNavigate }: SalesProps) {
                           />
                         ) : (
                           <div className="text-purple-400 font-semibold">
-                            {sale.yapePhoneNumber || YAPE_PHONE}
+                            {sale.yapePhoneNumber || yapePhoneNumber}
                           </div>
                         )}
                       </div>
@@ -173,7 +193,7 @@ export default function Sales({ onNavigate }: SalesProps) {
                         </div>
                         {sale.change > 0 && (
                           <div className="flex justify-between text-gray-400">
-                            <span>Vuelto:</span>
+                            <span>Caja:</span>
                             <span className="text-green-400">
                               S/ {sale.change.toFixed(2)}
                             </span>
@@ -184,12 +204,33 @@ export default function Sales({ onNavigate }: SalesProps) {
 
                     {(sale.evidencePhoto || (isEditing && editedSale?.evidencePhoto)) && (
                       <div className="mb-4">
-                        <div className="text-sm text-gray-400 mb-2">Evidencia de Pago:</div>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-sm text-gray-400">Evidencia de Pago:</div>
+                          {!isEditing && sale.evidencePhoto && (
+                            <button
+                              onClick={() => handleDownloadPhoto(sale.evidencePhoto!, sale.id)}
+                              className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-500 transition-colors text-sm"
+                            >
+                              <Download className="w-4 h-4" />
+                              Descargar
+                            </button>
+                          )}
+                        </div>
                         {isEditing ? (
                           <div>
                             <input
                               ref={(el) => {
                                 if (el) fileInputRefs[sale.id] = el;
+                              }}
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              onChange={(e) => handleFileChange(sale.id, e)}
+                              className="hidden"
+                            />
+                            <input
+                              ref={(el) => {
+                                if (el) uploadInputRefs[sale.id] = el;
                               }}
                               type="file"
                               accept="image/*"
@@ -199,27 +240,45 @@ export default function Sales({ onNavigate }: SalesProps) {
                             <div className="flex gap-2 mb-2">
                               <button
                                 type="button"
-                                onClick={() => fileInputRefs[sale.id]?.click()}
+                                onClick={() => handleTakePhoto(sale.id)}
                                 className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-500 transition-colors"
                               >
                                 <Camera className="w-4 h-4" />
-                                Cambiar Foto
+                                Tomar Foto
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleUploadPhoto(sale.id)}
+                                className="flex items-center gap-2 bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                              >
+                                <Upload className="w-4 h-4" />
+                                Subir Foto
                               </button>
                             </div>
                             {editedSale?.evidencePhoto && (
-                              <img
-                                src={editedSale.evidencePhoto}
-                                alt="Evidencia"
-                                className="w-full rounded-lg border-2 border-yellow-600 max-h-64 object-contain bg-black"
-                              />
+                              <div className="relative">
+                                <img
+                                  src={editedSale.evidencePhoto}
+                                  alt="Evidencia"
+                                  className="w-full rounded-lg border-2 border-yellow-600 max-h-64 object-contain bg-black"
+                                />
+                                <button
+                                  onClick={() => handleDownloadPhoto(editedSale.evidencePhoto!, sale.id)}
+                                  className="absolute top-2 right-2 bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-500 transition-colors"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </button>
+                              </div>
                             )}
                           </div>
                         ) : (
-                          <img
-                            src={sale.evidencePhoto}
-                            alt="Evidencia de pago"
-                            className="w-full rounded-lg border-2 border-yellow-600 max-h-64 object-contain bg-black"
-                          />
+                          <div className="relative">
+                            <img
+                              src={sale.evidencePhoto}
+                              alt="Evidencia de pago"
+                              className="w-full rounded-lg border-2 border-yellow-600 max-h-64 object-contain bg-black"
+                            />
+                          </div>
                         )}
                       </div>
                     )}
@@ -251,4 +310,6 @@ export default function Sales({ onNavigate }: SalesProps) {
     </div>
   );
 }
+
+
 

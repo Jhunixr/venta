@@ -101,7 +101,7 @@ export default function Report({ onNavigate }: ReportProps) {
 
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2 border-b border-gray-800">
-                <span className="text-gray-400">Vuelto Inicial:</span>
+                <span className="text-gray-400">Caja Inicial:</span>
                 <span className="font-semibold text-white">
                   S/ {initialCash.toFixed(2)}
                 </span>
@@ -115,7 +115,7 @@ export default function Report({ onNavigate }: ReportProps) {
               </div>
 
               <div className="flex justify-between items-center py-2 border-b border-gray-800">
-                <span className="text-gray-400">Vueltos Entregados:</span>
+                <span className="text-gray-400">Caja Entregada:</span>
                 <span className="font-semibold text-red-400">
                   - S/ {totalChange.toFixed(2)}
                 </span>

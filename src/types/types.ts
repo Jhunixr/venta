@@ -29,6 +29,7 @@ export interface StoreState {
   products: Product[];
   sales: Sale[];
   initialCash: number;
+  yapePhoneNumber: string;
 }
 
 export type Page = 'home' | 'inventory' | 'sale' | 'settings' | 'report' | 'sales';

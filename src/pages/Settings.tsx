@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Save, DollarSign } from 'lucide-react';
+import { ArrowLeft, Save, DollarSign, Phone } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { Page } from '../types/types';
 
@@ -8,14 +8,16 @@ interface SettingsProps {
 }
 
 export default function Settings({ onNavigate }: SettingsProps) {
-  const { initialCash, updateInitialCash } = useStore();
+  const { initialCash, updateInitialCash, yapePhoneNumber, updateYapePhoneNumber } = useStore();
   const [amount, setAmount] = useState(initialCash.toString());
+  const [yapePhone, setYapePhone] = useState(yapePhoneNumber);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     const value = parseFloat(amount) || 0;
     updateInitialCash(value);
-    alert('Vuelto inicial actualizado');
+    updateYapePhoneNumber(yapePhone);
+    alert('Configuración actualizada');
   };
 
   return (
@@ -40,7 +42,7 @@ export default function Settings({ onNavigate }: SettingsProps) {
             </div>
             <div>
               <h2 className="text-xl font-semibold text-white">
-                Vuelto Inicial
+                Caja Inicial
               </h2>
               <p className="text-sm text-gray-400">
                 Dinero para dar cambio al inicio del evento
@@ -62,7 +64,36 @@ export default function Settings({ onNavigate }: SettingsProps) {
                 placeholder="0.00"
               />
               <p className="mt-2 text-sm text-gray-400">
-                Este es el dinero que te entrega tu jefa para dar vueltos
+                Este es el dinero que te entrega tu jefa para la caja
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-gradient-to-br from-purple-600 to-purple-500 rounded-full">
+                  <Phone className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-white">
+                    Número de Yape
+                  </h2>
+                  <p className="text-sm text-gray-400">
+                    Número para recibir pagos con Yape
+                  </p>
+                </div>
+              </div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Número de Teléfono
+              </label>
+              <input
+                type="text"
+                value={yapePhone}
+                onChange={(e) => setYapePhone(e.target.value)}
+                className="w-full bg-black border-2 border-purple-600 rounded-xl px-4 py-4 text-white text-xl font-semibold focus:outline-none focus:border-purple-400 transition-colors"
+                placeholder="943177720"
+              />
+              <p className="mt-2 text-sm text-gray-400">
+                Este número aparecerá cuando se seleccione Yape como método de pago
               </p>
             </div>
 
