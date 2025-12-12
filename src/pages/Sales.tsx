@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Edit2, X, Save, Camera, Upload, Download } from 'lucide-react';
+import { ArrowLeft, Edit2, X, Save, Camera, Upload, Download, Trash2 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { Sale, Page } from '../types/types';
 
@@ -8,7 +8,7 @@ interface SalesProps {
 }
 
 export default function Sales({ onNavigate }: SalesProps) {
-  const { sales, updateSale, yapePhoneNumber } = useStore();
+  const { sales, updateSale, deleteSale, yapePhoneNumber } = useStore();
   const [editingSale, setEditingSale] = useState<string | null>(null);
   const [editedSale, setEditedSale] = useState<Partial<Sale> | null>(null);
   const [fileInputRefs, setFileInputRefs] = useState<{ [key: string]: HTMLInputElement | null }>({});
@@ -31,6 +31,18 @@ export default function Sales({ onNavigate }: SalesProps) {
     setEditingSale(null);
     setEditedSale(null);
     alert('Venta actualizada exitosamente');
+  };
+
+  const handleDelete = (sale: Sale) => {
+    const confirmed = confirm(`¿Eliminar la venta de S/ ${sale.total.toFixed(2)}?`);
+    if (!confirmed) return;
+
+    deleteSale(sale.id);
+    if (editingSale === sale.id) {
+      setEditingSale(null);
+      setEditedSale(null);
+    }
+    alert('Venta eliminada y stock restaurado');
   };
 
   const handleFileChange = (saleId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,8 +145,8 @@ export default function Sales({ onNavigate }: SalesProps) {
                     key={sale.id}
                     className="bg-gradient-to-br from-gray-900 to-black border-2 border-yellow-600 rounded-xl p-6"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
+                    <div className="flex items-start justify-between mb-4 gap-3">
+                      <div className="flex-1">
                         <div className="text-sm text-gray-400 mb-1">
                           {formatDate(sale.timestamp)}
                         </div>
@@ -153,14 +165,23 @@ export default function Sales({ onNavigate }: SalesProps) {
                           </span>
                         </div>
                       </div>
-                      {!isEditing && (
+                      <div className="flex gap-2">
+                        {!isEditing && (
+                          <button
+                            onClick={() => handleEdit(sale)}
+                            className="p-2 bg-yellow-600 text-black rounded-lg hover:bg-yellow-500 transition-colors"
+                          >
+                            <Edit2 className="w-5 h-5" />
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleEdit(sale)}
-                          className="p-2 bg-yellow-600 text-black rounded-lg hover:bg-yellow-500 transition-colors"
+                          onClick={() => handleDelete(sale)}
+                          className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors"
+                          title="Eliminar venta"
                         >
-                          <Edit2 className="w-5 h-5" />
+                          <Trash2 className="w-5 h-5" />
                         </button>
-                      )}
+                      </div>
                     </div>
 
                     <div className="space-y-2 mb-4">

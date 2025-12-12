@@ -58,6 +58,20 @@ export default function Inventory({ onNavigate }: InventoryProps) {
     setFormData({ name: '', price: '', stock: '' });
   };
 
+  const handleAddStock = (product: Product) => {
+    const quantity = prompt(`¿Cuántas unidades quieres agregar a ${product.name}?`);
+    const parsed = quantity ? parseInt(quantity) : 0;
+    if (!quantity || isNaN(parsed) || parsed <= 0) {
+      alert('Ingresa una cantidad válida mayor a 0');
+      return;
+    }
+    updateProduct(product.id, {
+      stock: product.stock + parsed,
+      initialStock: product.initialStock + parsed,
+    });
+    alert(`Se agregaron ${parsed} unidades a ${product.name}`);
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-4xl mx-auto px-4 py-6">
@@ -203,6 +217,12 @@ export default function Inventory({ onNavigate }: InventoryProps) {
                       className="p-2 bg-yellow-600 text-black rounded-lg hover:bg-yellow-500 transition-colors"
                     >
                       <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleAddStock(product)}
+                      className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => {

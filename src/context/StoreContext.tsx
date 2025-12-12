@@ -12,6 +12,7 @@ interface StoreContextType {
   deleteProduct: (id: string) => void;
   addSale: (sale: Omit<Sale, 'id' | 'timestamp'>) => void;
   updateSale: (id: string, updates: Partial<Sale>) => void;
+  deleteSale: (id: string) => void;
   updateInitialCash: (amount: number) => void;
   updateYapePhoneNumber: (phoneNumber: string) => void;
   updateYapeQRCode: (qrCode: string) => void;
@@ -28,6 +29,7 @@ const initialState: StoreState = {
   sales: [],
   initialCash: 0,
   yapePhoneNumber: '943177720',
+  yapeQRCode: '',
 };
 
 export function StoreProvider({ children }: { children: ReactNode }) {
@@ -111,6 +113,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const deleteSale = (id: string) => {
+    setState((prev) => {
+      const saleToDelete = prev.sales.find((s) => s.id === id);
+      if (!saleToDelete) return prev;
+
+      const restoredProducts = prev.products.map((product) => {
+        const soldItem = saleToDelete.items.find((item) => item.productId === product.id);
+        if (soldItem) {
+          return {
+            ...product,
+            stock: product.stock + soldItem.quantity,
+          };
+        }
+        return product;
+      });
+
+      return {
+        ...prev,
+        products: restoredProducts,
+        sales: prev.sales.filter((s) => s.id !== id),
+      };
+    });
+  };
+
   const updateInitialCash = (amount: number) => {
     setState((prev) => ({
       ...prev,
@@ -155,6 +181,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         deleteProduct,
         addSale,
         updateSale,
+        deleteSale,
         updateInitialCash,
         updateYapePhoneNumber,
         updateYapeQRCode,
