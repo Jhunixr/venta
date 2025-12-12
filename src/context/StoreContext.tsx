@@ -6,6 +6,7 @@ interface StoreContextType {
   sales: Sale[];
   initialCash: number;
   yapePhoneNumber: string;
+  yapeQRCode?: string;
   addProduct: (product: Omit<Product, 'id'>) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
@@ -13,6 +14,7 @@ interface StoreContextType {
   updateSale: (id: string, updates: Partial<Sale>) => void;
   updateInitialCash: (amount: number) => void;
   updateYapePhoneNumber: (phoneNumber: string) => void;
+  updateYapeQRCode: (qrCode: string) => void;
   resetData: () => void;
   getTotalCash: () => number;
 }
@@ -123,6 +125,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const updateYapeQRCode = (qrCode: string) => {
+    setState((prev) => ({
+      ...prev,
+      yapeQRCode: qrCode,
+    }));
+  };
+
   const resetData = () => {
     setState(initialState);
     localStorage.removeItem(STORAGE_KEY);
@@ -140,6 +149,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         sales: state.sales,
         initialCash: state.initialCash,
         yapePhoneNumber: state.yapePhoneNumber,
+        yapeQRCode: state.yapeQRCode,
         addProduct,
         updateProduct,
         deleteProduct,
@@ -147,6 +157,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         updateSale,
         updateInitialCash,
         updateYapePhoneNumber,
+        updateYapeQRCode,
         resetData,
         getTotalCash,
       }}

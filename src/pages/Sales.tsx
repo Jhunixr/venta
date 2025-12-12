@@ -36,12 +36,29 @@ export default function Sales({ onNavigate }: SalesProps) {
   const handleFileChange = (saleId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validar que sea una imagen
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor selecciona una imagen válida');
+        return;
+      }
+      
+      // Validar tamaño (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('La imagen es muy grande. Por favor selecciona una imagen menor a 5MB');
+        return;
+      }
+
       const reader = new FileReader();
+      reader.onerror = () => {
+        alert('Error al cargar la imagen. Por favor intenta de nuevo.');
+      };
       reader.onloadend = () => {
-        setEditedSale((prev) => ({
-          ...prev,
-          evidencePhoto: reader.result as string,
-        }));
+        if (reader.result && typeof reader.result === 'string') {
+          setEditedSale((prev) => ({
+            ...prev,
+            evidencePhoto: reader.result as string,
+          }));
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -261,6 +278,15 @@ export default function Sales({ onNavigate }: SalesProps) {
                                   src={editedSale.evidencePhoto}
                                   alt="Evidencia"
                                   className="w-full rounded-lg border-2 border-yellow-600 max-h-64 object-contain bg-black"
+                                  onError={(e) => {
+                                    e.currentTarget.src = '';
+                                    e.currentTarget.alt = 'Error al cargar imagen';
+                                    alert('Error al mostrar la imagen. Por favor vuelve a subirla.');
+                                    setEditedSale((prev) => ({
+                                      ...prev,
+                                      evidencePhoto: undefined,
+                                    }));
+                                  }}
                                 />
                                 <button
                                   onClick={() => handleDownloadPhoto(editedSale.evidencePhoto!, sale.id)}
@@ -277,6 +303,11 @@ export default function Sales({ onNavigate }: SalesProps) {
                               src={sale.evidencePhoto}
                               alt="Evidencia de pago"
                               className="w-full rounded-lg border-2 border-yellow-600 max-h-64 object-contain bg-black"
+                              onError={(e) => {
+                                e.currentTarget.src = '';
+                                e.currentTarget.alt = 'Error al cargar imagen';
+                                alert('Error al mostrar la imagen guardada.');
+                              }}
                             />
                           </div>
                         )}

@@ -9,16 +9,18 @@ interface SaleProps {
 }
 
 export default function Sale({ onNavigate }: SaleProps) {
-  const { products, addSale, yapePhoneNumber } = useStore();
+  const { products, addSale, yapePhoneNumber, yapeQRCode, updateProduct } = useStore();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'efectivo' | 'yape'>('efectivo');
   const [amountPaid, setAmountPaid] = useState('');
   const [evidencePhoto, setEvidencePhoto] = useState<string | null>(null);
+  const [showOutOfStock, setShowOutOfStock] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
 
   const availableProducts = products.filter((p) => p.stock > 0);
+  const outOfStockProducts = products.filter((p) => p.stock === 0);
 
   const addToCart = (productId: string) => {
     const product = products.find((p) => p.id === productId);
@@ -124,11 +126,39 @@ export default function Sale({ onNavigate }: SaleProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validar que sea una imagen
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor selecciona una imagen válida');
+        return;
+      }
+      
+      // Validar tamaño (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('La imagen es muy grande. Por favor selecciona una imagen menor a 5MB');
+        return;
+      }
+
       const reader = new FileReader();
+      reader.onerror = () => {
+        alert('Error al cargar la imagen. Por favor intenta de nuevo.');
+        setEvidencePhoto(null);
+      };
       reader.onloadend = () => {
-        setEvidencePhoto(reader.result as string);
+        if (reader.result && typeof reader.result === 'string') {
+          setEvidencePhoto(reader.result);
+        }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRestoreStock = (productId: string, currentStock: number) => {
+    const quantity = prompt(`¿Cuántas unidades quieres agregar a ${products.find(p => p.id === productId)?.name}?`);
+    if (quantity && !isNaN(parseInt(quantity)) && parseInt(quantity) > 0) {
+      updateProduct(productId, {
+        stock: currentStock + parseInt(quantity),
+      });
+      alert(`Se agregaron ${quantity} unidades al stock`);
     }
   };
 
@@ -170,9 +200,19 @@ export default function Sale({ onNavigate }: SaleProps) {
         </div>
 
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-300 mb-3">
-            Productos Disponibles
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-gray-300">
+              Productos Disponibles
+            </h2>
+            {outOfStockProducts.length > 0 && (
+              <button
+                onClick={() => setShowOutOfStock(!showOutOfStock)}
+                className="text-sm text-red-400 hover:text-red-300"
+              >
+                {showOutOfStock ? 'Ocultar' : 'Ver'} Agotados ({outOfStockProducts.length})
+              </button>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-3">
             {availableProducts.length === 0 ? (
               <div className="col-span-2 text-center py-8 text-gray-500">
@@ -202,6 +242,42 @@ export default function Sale({ onNavigate }: SaleProps) {
               ))
             )}
           </div>
+
+          {showOutOfStock && outOfStockProducts.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-md font-semibold text-red-400 mb-3">
+                Productos Agotados
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {outOfStockProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className="bg-gradient-to-br from-gray-900 to-black border-2 border-red-600/50 rounded-xl p-4"
+                  >
+                    <div className="text-left">
+                      <h3 className="font-semibold text-white mb-1 line-clamp-2">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-yellow-500 font-bold text-lg">
+                          S/ {product.price.toFixed(2)}
+                        </span>
+                        <span className="text-red-400 text-sm font-semibold">
+                          Agotado
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleRestoreStock(product.id, product.stock)}
+                        className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-500 transition-colors text-sm font-semibold"
+                      >
+                        Agregar Stock
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {cart.length > 0 && (
@@ -335,7 +411,7 @@ export default function Sale({ onNavigate }: SaleProps) {
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         Número de Yape para Transferir
                       </label>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 mb-3">
                         <span className="text-2xl font-bold text-purple-400">
                           {yapePhoneNumber}
                         </span>
@@ -347,6 +423,23 @@ export default function Sale({ onNavigate }: SaleProps) {
                           Copiar
                         </button>
                       </div>
+                      {yapeQRCode && (
+                        <div className="mb-3">
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Código QR de Yape
+                          </label>
+                          <div className="bg-white p-2 rounded-lg inline-block">
+                            <img
+                              src={yapeQRCode}
+                              alt="QR Yape"
+                              className="w-48 h-48 object-contain"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
                       <p className="text-xs text-gray-400 mt-2">
                         Transfiere el monto de S/ {total.toFixed(2)} a este número
                       </p>
@@ -377,6 +470,18 @@ export default function Sale({ onNavigate }: SaleProps) {
                             src={evidencePhoto}
                             alt="Evidencia de pago"
                             className="w-full rounded-xl border-2 border-yellow-600 max-h-64 object-contain bg-black"
+                            onError={(e) => {
+                              e.currentTarget.src = '';
+                              e.currentTarget.alt = 'Error al cargar imagen';
+                              alert('Error al mostrar la imagen. Por favor vuelve a subirla.');
+                              setEvidencePhoto(null);
+                            }}
+                            onLoad={() => {
+                              // Validar que la imagen se cargó correctamente
+                              if (!evidencePhoto || evidencePhoto.trim() === '') {
+                                setEvidencePhoto(null);
+                              }
+                            }}
                           />
                           <div className="absolute top-2 right-2 flex gap-2">
                             <button

@@ -30,6 +30,7 @@ export interface StoreState {
   sales: Sale[];
   initialCash: number;
   yapePhoneNumber: string;
+  yapeQRCode?: string;
 }
 
 export type Page = 'home' | 'inventory' | 'sale' | 'settings' | 'report' | 'sales';

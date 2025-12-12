@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowLeft, Save, DollarSign, Phone } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ArrowLeft, Save, DollarSign, Phone, QrCode, X } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { Page } from '../types/types';
 
@@ -8,9 +8,43 @@ interface SettingsProps {
 }
 
 export default function Settings({ onNavigate }: SettingsProps) {
-  const { initialCash, updateInitialCash, yapePhoneNumber, updateYapePhoneNumber } = useStore();
+  const { initialCash, updateInitialCash, yapePhoneNumber, updateYapePhoneNumber, yapeQRCode, updateYapeQRCode } = useStore();
   const [amount, setAmount] = useState(initialCash.toString());
   const [yapePhone, setYapePhone] = useState(yapePhoneNumber);
+  const qrInputRef = useRef<HTMLInputElement>(null);
+
+  const handleQRChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor selecciona una imagen válida');
+        return;
+      }
+      
+      if (file.size > 2 * 1024 * 1024) {
+        alert('La imagen es muy grande. Por favor selecciona una imagen menor a 2MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onerror = () => {
+        alert('Error al cargar la imagen. Por favor intenta de nuevo.');
+      };
+      reader.onloadend = () => {
+        if (reader.result && typeof reader.result === 'string') {
+          updateYapeQRCode(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveQR = () => {
+    updateYapeQRCode('');
+    if (qrInputRef.current) {
+      qrInputRef.current.value = '';
+    }
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +128,74 @@ export default function Settings({ onNavigate }: SettingsProps) {
               />
               <p className="mt-2 text-sm text-gray-400">
                 Este número aparecerá cuando se seleccione Yape como método de pago
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-gradient-to-br from-purple-600 to-purple-500 rounded-full">
+                  <QrCode className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-white">
+                    Código QR de Yape
+                  </h2>
+                  <p className="text-sm text-gray-400">
+                    Sube el código QR de tu Yape para mostrarlo en las ventas
+                  </p>
+                </div>
+              </div>
+              <input
+                ref={qrInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleQRChange}
+                className="hidden"
+              />
+              {yapeQRCode ? (
+                <div className="relative">
+                  <div className="bg-white p-4 rounded-xl inline-block">
+                    <img
+                      src={yapeQRCode}
+                      alt="QR Yape"
+                      className="w-48 h-48 object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        alert('Error al mostrar el QR. Por favor vuelve a subirlo.');
+                        handleRemoveQR();
+                      }}
+                    />
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => qrInputRef.current?.click()}
+                      className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-500 transition-colors text-sm"
+                    >
+                      Cambiar QR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveQR}
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-500 transition-colors text-sm flex items-center gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => qrInputRef.current?.click()}
+                  className="w-full bg-purple-600 text-white px-4 py-4 rounded-xl hover:bg-purple-500 transition-colors font-semibold flex items-center justify-center gap-2"
+                >
+                  <QrCode className="w-5 h-5" />
+                  Subir Código QR
+                </button>
+              )}
+              <p className="mt-2 text-sm text-gray-400">
+                El QR aparecerá cuando se seleccione Yape como método de pago
               </p>
             </div>
 
